@@ -1,31 +1,50 @@
-import pickle
-import numpy as np
+from config.elasticsearch import get_es_client
 
 class SearchService:
     def __init__(self):
-        self.bm25 = None
-        self.df = None
+        self.es = None
 
     def load(self):
-        with open("data/processed/bm25.pkl", "rb") as f:
-            self.bm25 = pickle.load(f)
-
-        with open("data/processed/data.pkl", "rb") as f:
-            self.df = pickle.load(f)
+        self.es = get_es_client()
+        if self.es.ping():
+            print("Connected to Elasticsearch")
+        else:
+            print("Could not connect to Elasticsearch")
 
     def search(self, query, top_k=10):
-        scores = self.bm25.search(query)
-
-        idx = np.argsort(scores)[::-1][:top_k]
-
-        results = self.df.iloc[idx].copy()
-        results["score"] = scores[idx]
-
-        return results[[
-            "RecipeId",
-            "Name",
-            "Images",
-            "RecipeIngredientParts",
-            "RecipeInstructions",
-            "score"
-        ]].to_dict(orient="records")
+        if not self.es:
+            self.load()
+            
+        try:
+            response = self.es.search(
+                index="recipes",
+                size=top_k,
+                query={
+                    "multi_match": {
+                        "query": query,
+                        "fields": [
+                            "name^3", 
+                            "ingredients.name^2", 
+                            "steps", 
+                            "description", 
+                            "keywords", 
+                            "combined_text"
+                        ],
+                        "fuzziness": "AUTO",
+                        "operator": "or"
+                    }
+                }
+            )
+            
+            results = []
+            for hit in response["hits"]["hits"]:
+                source = hit["_source"]
+                if "combined_text" in source:
+                    del source["combined_text"]
+                source["score"] = hit["_score"]
+                results.append(source)
+                
+            return results
+        except Exception as e:
+            print(f"Error searching Elasticsearch: {e}")
+            return []
