@@ -17,3 +17,5 @@ def search():
     results = search_engine.search(query)
 
     return jsonify(results)
+
+    

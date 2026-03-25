@@ -48,3 +48,43 @@ class SearchService:
         except Exception as e:
             print(f"Error searching Elasticsearch: {e}")
             return []
+
+    def get_by_ids(self, recipe_ids):
+        if not self.es:
+            self.load()
+            
+        if not recipe_ids:
+            print("No recipe_ids provided to get_by_ids")
+            return []
+
+        print(f"Querying Elasticsearch for IDs: {recipe_ids}")
+        try:
+            # Query elastic search using a terms query
+            # Cast inputs to string just in case 'id' is mapped as keyword or string
+            string_ids = [str(rid) for rid in recipe_ids]
+            response = self.es.search(
+                index="recipes",
+                size=len(recipe_ids),
+                query={
+                    "terms": {
+                        "id": string_ids
+                    }
+                }
+            )
+            
+            results = []
+            for hit in response["hits"]["hits"]:
+                source = hit["_source"]
+                if "combined_text" in source:
+                    del source["combined_text"]
+                # In case elasticsearch 'id' differs from '_id'
+                if "id" not in source:
+                    # just in case
+                    source["id"] = hit["_id"]
+                results.append(source)
+            
+            print(f"Elasticsearch returned {len(results)} recipes for {len(recipe_ids)} requested IDs")
+            return results
+        except Exception as e:
+            print(f"Error executing terms query in Elasticsearch: {e}")
+            return []

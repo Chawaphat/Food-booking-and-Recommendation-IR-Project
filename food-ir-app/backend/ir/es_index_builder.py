@@ -1,16 +1,14 @@
 import sys
 import os
 
-# Add project root to sys.path to resolve imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import re
 from elasticsearch import helpers
 from app.config.elasticsearch import get_es_client
-from ir.preprocess import preprocess, clean_list_field # We might reuse preprocess if we index preprocessed text, 
-# but better to use ES analyzers. However, to match logic "closely" and handle specific cleaning tasks, 
-# we can reuse some cleaning logic.
+from ir.preprocess import preprocess, clean_list_field 
+
 
 INDEX_NAME = "recipes"
 
@@ -69,9 +67,6 @@ def setup_index(es):
 def parse_r_list(text):
     if not isinstance(text, str):
         return []
-    # Handle R-style vectors: c("a", "b")
-    # Clean up artifacts first? Or regex extract directly
-    # This regex looks for content inside double quotes
     return re.findall(r'"(.*?)"', text)
 
 def extract_image(text):
@@ -82,24 +77,18 @@ def extract_image(text):
 
 def generate_docs(df):
     for _, row in df.iterrows():
-        # Clean list fields
         ingredients_parts = parse_r_list(row["RecipeIngredientParts"])
         quantities = parse_r_list(row["RecipeIngredientQuantities"])
         steps = parse_r_list(row["RecipeInstructions"])
         image = extract_image(row["Images"])
         keywords = parse_r_list(row["Keywords"])
         
-        # Merge ingredients
         ingredients = []
         for i in range(len(ingredients_parts)):
             ingredients.append({
                 "name": ingredients_parts[i],
                 "quantity": quantities[i] if i < len(quantities) else ""
             })
-
-        # Create a combined text field for search similar to original BM25 logic
-        # Original: Name*3 + Ingredients*2 + Instructions + Description + Keywords
-        # We can simulate boosting at query time, but indexing text together is simple
         
         name = str(row["Name"]) if pd.notna(row["Name"]) else ""
         desc = str(row["Description"]) if pd.notna(row["Description"]) else ""
@@ -120,7 +109,7 @@ def generate_docs(df):
                 "name": name,
                 "description": desc,
                 "ingredients": ingredients,
-                "steps": steps, # List of strings, ES handles arrays transparently
+                "steps": steps, 
                 "keywords": keywords,
                 "image": image,
                 "combined_text": combined_text

@@ -44,24 +44,25 @@ raw_df = pd.DataFrame({
     "steps": steps,
 })
 
-df["RecipeIngredientParts"] = df["RecipeIngredientParts"].apply(clean_list_field)
-df["RecipeInstructions"] = df["RecipeInstructions"].apply(clean_list_field)
 
-df["text"] = (
-    df["Name"].fillna("")*3 + " " +
-    df["RecipeIngredientParts"].fillna("")*2 + " " +
-    df["RecipeInstructions"].fillna("") + " " +
-    df["Description"].fillna("") + " " +
-    df["Keywords"].fillna("")
-)
+# df["RecipeIngredientParts"] = df["RecipeIngredientParts"].apply(clean_list_field)
+# df["RecipeInstructions"] = df["RecipeInstructions"].apply(clean_list_field)
 
-df["text"] = df["text"].apply(preprocess)
+# df["text"] = (
+#     df["Name"].fillna("")*3 + " " +
+#     df["RecipeIngredientParts"].fillna("")*2 + " " +
+#     df["RecipeInstructions"].fillna("") + " " +
+#     df["Description"].fillna("") + " " +
+#     df["Keywords"].fillna("")
+# )
 
-bm25 = BM25()
-bm25.fit(df["text"])
+# df["text"] = df["text"].apply(preprocess)
 
-pickle.dump(bm25, open("data/processed/bm25.pkl", "wb"))
-pickle.dump(df, open("data/processed/data_clean.pkl", "wb"))
+# bm25 = BM25()
+# bm25.fit(df["text"])
+
+# pickle.dump(bm25, open("data/processed/bm25.pkl", "wb"))
+# pickle.dump(df, open("data/processed/data_clean.pkl", "wb"))
 
 pickle.dump(raw_df, open("data/processed/data_raw.pkl", "wb"))
 

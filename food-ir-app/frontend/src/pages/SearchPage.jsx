@@ -63,6 +63,13 @@ export default function SearchPage() {
               placeholder="Search for ingredients, dishes..."
             />
           </form>
+
+          <button
+            onClick={() => navigate("/bookmarks")}
+            className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-medium shadow-sm transition-colors"
+          >
+            My Bookmarks
+          </button>
         </div>
       </div>
 
