@@ -29,3 +29,8 @@ export const getFolderRecipes = async (folderId, limit, sort) => {
   const response = await api.get(`/folders/${folderId}/recipes${queryString}`);
   return response.data;
 };
+
+export const getFolderSuggestions = async (folderId) => {
+  const response = await api.get(`/folders/${folderId}/suggest`);
+  return response.data;
+};

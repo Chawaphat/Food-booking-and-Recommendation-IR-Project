@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -6,18 +6,108 @@ import {
   Star,
   Grid,
   LayoutList,
+  Sparkles,
 } from "lucide-react";
 import {
   getFolders,
   getFolderRecipes,
   getAllBookmarkedRecipes,
+  getFolderSuggestions,
+  createFolder,
 } from "../services/api";
 import RecipeCard from "../components/RecipeCard";
 import DishDetailModal from "../components/DishDetailModal";
 import BottomNav from "../components/BottomNav";
 
+// ─── Horizontal auto-scrolling recipe row (reused from LandingPage) ──────────
+function RecipeRow({ recipes, onCardClick, onRefresh }) {
+  const containerRef = useRef(null);
+  const pausedRef = useRef(false);
+  const resumeTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !recipes?.length) return;
+    const step = 300;
+    const intervalMs = 3500;
+    const autoScroll = () => {
+      if (pausedRef.current) return;
+      const max = container.scrollWidth - container.clientWidth;
+      if (max <= 0) return;
+      const next = container.scrollLeft + step;
+      container.scrollTo({
+        left: next >= max - 4 ? 0 : next,
+        behavior: "smooth",
+      });
+    };
+    const id = setInterval(autoScroll, intervalMs);
+    return () => {
+      clearInterval(id);
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    };
+  }, [recipes?.length]);
+
+  const pause = () => {
+    pausedRef.current = true;
+    if (resumeTimeoutRef.current) {
+      clearTimeout(resumeTimeoutRef.current);
+      resumeTimeoutRef.current = null;
+    }
+  };
+  const resume = () => {
+    pausedRef.current = false;
+  };
+  const pauseFor = (ms = 4000) => {
+    pause();
+    resumeTimeoutRef.current = setTimeout(() => {
+      pausedRef.current = false;
+      resumeTimeoutRef.current = null;
+    }, ms);
+  };
+
+  if (!recipes || recipes.length === 0) return null;
+  return (
+    <div
+      ref={containerRef}
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onWheel={() => pauseFor(3500)}
+      onTouchStart={pause}
+      onTouchEnd={() => pauseFor(2500)}
+      className="flex overflow-x-auto pb-4 gap-5 no-scrollbar snap-x snap-mandatory"
+    >
+      {recipes.map((recipe, idx) => (
+        <div
+          key={recipe.id ?? `r-${idx}`}
+          className="flex-none w-64 snap-start"
+        >
+          <RecipeCard
+            recipe={recipe}
+            onClick={onCardClick}
+            onRefresh={onRefresh}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Shimmer skeleton ─────────────────────────────────────────────────────────
+function ShimmerRow() {
+  return (
+    <div className="flex gap-5 overflow-hidden">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="flex-none w-64 rounded-3xl bg-gray-200 animate-pulse h-52"
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Folder card with mosaic image preview ────────────────────────────────────
 function FolderCard({ folder, previewRecipes, onClick }) {
-  // Extract up to 3 images from preview recipes
   const images = previewRecipes
     .slice(0, 3)
     .map((r) => r.image)
@@ -73,33 +163,74 @@ function FolderCard({ folder, previewRecipes, onClick }) {
         <h3 className="font-bold text-gray-900 group-hover:text-red-500 transition-colors truncate">
           {folder.name}
         </h3>
-        <p className="text-xs text-gray-400 mt-1">Folder</p>
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 export default function BookmarksPage() {
   const { folderId } = useParams();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("recipes"); // "recipes" or "categories"
+  const [activeTab, setActiveTab] = useState("recipes");
   const [folders, setFolders] = useState([]);
   const [folderPreviews, setFolderPreviews] = useState({});
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [sort, setSort] = useState("rating");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+
+  const handleCreateFolder = async (e) => {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+    try {
+      await createFolder(newFolderName);
+      setNewFolderName("");
+      setIsCreatingFolder(false);
+      fetchData();
+    } catch (error) {
+      console.error("Failed to create folder", error);
+      alert("Failed to create folder");
+    }
+  };
+
+  // UC-008: folder suggestions
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, [folderId, sort, activeTab]);
 
+  // Load TF-IDF suggestions whenever a folder is opened
+  useEffect(() => {
+    if (!folderId) {
+      setSuggestions([]);
+      return;
+    }
+    setSuggestionsLoading(true);
+    getSuggestions(folderId);
+  }, [folderId]);
+
+  const getSuggestions = async (id) => {
+    try {
+      const data = await getFolderSuggestions(id);
+      setSuggestions(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.warn("Could not load folder suggestions:", e.message);
+      setSuggestions([]);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
       if (folderId) {
-        // Viewing a specific folder's recipes
         const foldersData = await getFolders();
         setFolders(foldersData);
 
@@ -107,11 +238,9 @@ export default function BookmarksPage() {
         setRecipes(folderRecipesData);
       } else {
         if (activeTab === "recipes") {
-          // Fetch all bookmarks
           const allRecipesData = await getAllBookmarkedRecipes(sort);
           setRecipes(allRecipesData);
         } else if (activeTab === "categories") {
-          // Fetch folders and their previews
           const foldersData = await getFolders();
           setFolders(foldersData);
 
@@ -158,7 +287,7 @@ export default function BookmarksPage() {
               </button>
             )}
             <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-              {folderId ? currentFolderName : "My Bookmark"}
+              {folderId ? currentFolderName || "Folder" : "My Bookmark"}
             </h1>
           </div>
 
@@ -190,7 +319,7 @@ export default function BookmarksPage() {
             </div>
           )}
 
-          {/* Filter Dropdown (hidden if in Categories tab) */}
+          {/* Filter Dropdown */}
           {folderId || activeTab === "recipes" ? (
             <div className="relative self-start md:self-auto md:justify-self-end">
               <select
@@ -229,45 +358,92 @@ export default function BookmarksPage() {
             {/* View: Categories Tab */}
             {!folderId && activeTab === "categories" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {folders.length > 0 ? (
-                  folders.map((folder) => (
-                    <FolderCard
-                      key={folder.id}
-                      folder={folder}
-                      previewRecipes={folderPreviews[folder.id] || []}
-                      onClick={() => navigate(`/bookmarks/folder/${folder.id}`)}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full py-20 text-center flex flex-col items-center justify-center">
-                    <FolderIcon className="w-12 h-12 text-gray-300 mb-4" />
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      No categories yet
-                    </h3>
-                    <p className="text-gray-500 max-w-sm">
-                      Create folders to organize your bookmarks.
-                    </p>
-                  </div>
-                )}
+                <div
+                  className="group cursor-pointer bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-dashed border-gray-300 flex flex-col h-56 justify-center items-center relative"
+                  onClick={() => !isCreatingFolder && setIsCreatingFolder(true)}
+                >
+                  {isCreatingFolder ? (
+                    <div
+                      className="p-4 w-full h-full flex flex-col justify-center gap-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        placeholder="Folder Name"
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-red-400"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCreateFolder(e);
+                          if (e.key === "Escape") setIsCreatingFolder(false);
+                        }}
+                      />
+                      <div className="flex gap-2 w-full">
+                        <button
+                          onClick={handleCreateFolder}
+                          className="flex-1 py-2 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setIsCreatingFolder(false)}
+                          className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-red-500 group-hover:bg-red-50 transition-colors mb-3">
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </div>
+                      <span className="font-bold text-gray-500 group-hover:text-red-500 transition-colors">
+                        New Category
+                      </span>
+                    </>
+                  )}
+                </div>
+                {folders.map((folder) => (
+                  <FolderCard
+                    key={folder.id}
+                    folder={folder}
+                    previewRecipes={folderPreviews[folder.id] || []}
+                    onClick={() => navigate(`/bookmarks/folder/${folder.id}`)}
+                  />
+                ))}
               </div>
             )}
 
             {/* View: Recipes (All Recipes tab OR specific Folder view) */}
             {(folderId || activeTab === "recipes") &&
               (recipes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 masonry-like">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {recipes.map((recipe, idx) => (
                     <div key={idx} className="relative group">
-                      <RecipeCard recipe={recipe} onClick={setSelectedRecipe} />
-                      <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm border border-gray-100/50 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                        {recipe.rating || "New"}
-                      </div>
+                      <RecipeCard
+                        recipe={recipe}
+                        onClick={setSelectedRecipe}
+                        onRefresh={fetchData}
+                      />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-4xl border border-dashed border-gray-200 mt-4">
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-dashed border-gray-200 mt-4">
                   <Star className="w-12 h-12 text-gray-300 mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     No bookmarks found
@@ -279,6 +455,53 @@ export default function BookmarksPage() {
                   </p>
                 </div>
               ))}
+
+            {/* ── UC-008: Suggestion section (folder view only) ───────────── */}
+            {folderId && (
+              <div className="mt-12">
+                {/* Divider */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                    Suggested for you
+                  </span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl shadow">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-bold tracking-tight text-gray-900 leading-tight">
+                      Suggested for this folder
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-0.5">
+                      Recipes similar to your bookmarks, ranked by relevance
+                      &amp; popularity
+                    </p>
+                  </div>
+                </div>
+
+                {suggestionsLoading ? (
+                  <ShimmerRow />
+                ) : suggestions.length > 0 ? (
+                  <RecipeRow
+                    recipes={suggestions}
+                    onCardClick={setSelectedRecipe}
+                    onRefresh={fetchData}
+                  />
+                ) : (
+                  <div className="flex items-center gap-4 px-6 py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 text-sm">
+                    <Sparkles className="w-5 h-5 flex-shrink-0 text-gray-300" />
+                    <span>
+                      Suggestions appear once the vector index is built and this
+                      folder has bookmarks.
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

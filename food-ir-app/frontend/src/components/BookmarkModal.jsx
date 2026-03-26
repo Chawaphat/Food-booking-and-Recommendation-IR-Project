@@ -1,14 +1,23 @@
 import { useState, useEffect } from "react";
 import { X, Star } from "lucide-react";
-import { getFolders, createFolder, bookmarkRecipe } from "../services/api";
+import {
+  getFolders,
+  createFolder,
+  bookmarkRecipe,
+  updateBookmark,
+} from "../services/api";
 
-export default function BookmarkModal({ recipe, onClose }) {
+export default function BookmarkModal({ recipe, onClose, onRefresh }) {
   const [folders, setFolders] = useState([]);
-  const [selectedFolderId, setSelectedFolderId] = useState("");
-  const [rating, setRating] = useState(0);
+  const [selectedFolderId, setSelectedFolderId] = useState(
+    recipe.folder_id ? recipe.folder_id.toString() : "",
+  );
+  const [rating, setRating] = useState(recipe.rating || 0);
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isEditing = !!recipe.bookmark_id;
 
   useEffect(() => {
     fetchFolders();
@@ -18,7 +27,7 @@ export default function BookmarkModal({ recipe, onClose }) {
     try {
       const data = await getFolders();
       setFolders(data);
-      if (data.length > 0) {
+      if (data.length > 0 && !selectedFolderId) {
         setSelectedFolderId(data[0].id.toString());
       }
     } catch (error) {
@@ -57,12 +66,22 @@ export default function BookmarkModal({ recipe, onClose }) {
         alert("Recipe ID is missing!");
         return;
       }
-      await bookmarkRecipe(recipeId, parseInt(selectedFolderId), rating);
-      alert("Bookmark added successfully!");
+      if (isEditing) {
+        await updateBookmark(
+          recipe.bookmark_id,
+          rating,
+          parseInt(selectedFolderId),
+        );
+        alert("Bookmark updated successfully!");
+      } else {
+        await bookmarkRecipe(recipeId, parseInt(selectedFolderId), rating);
+        alert("Bookmark added successfully!");
+      }
       onClose();
+      if (onRefresh) onRefresh();
     } catch (error) {
-      console.error("Failed to add bookmark", error);
-      alert("Failed to add bookmark");
+      console.error("Failed to save bookmark", error);
+      alert("Failed to save bookmark");
     } finally {
       setLoading(false);
     }
@@ -78,10 +97,14 @@ export default function BookmarkModal({ recipe, onClose }) {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-bold mb-4">Bookmark Recipe</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {isEditing ? "Edit Bookmark" : "Bookmark Recipe"}
+        </h2>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Folder</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Folder
+          </label>
           <div className="flex gap-2">
             {!isCreatingFolder ? (
               <>
@@ -90,7 +113,9 @@ export default function BookmarkModal({ recipe, onClose }) {
                   onChange={(e) => setSelectedFolderId(e.target.value)}
                   className="w-full px-4 py-2 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:border-gray-200 focus:ring-2 focus:ring-gray-100 outline-none"
                 >
-                  <option value="" disabled>Select a folder</option>
+                  <option value="" disabled>
+                    Select a folder
+                  </option>
                   {folders.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name}
@@ -132,7 +157,9 @@ export default function BookmarkModal({ recipe, onClose }) {
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Rating
+          </label>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -141,8 +168,11 @@ export default function BookmarkModal({ recipe, onClose }) {
                 className="focus:outline-none"
               >
                 <Star
-                  className={`w-8 h-8 ${rating >= star ? "text-yellow-400 fill-current" : "text-gray-300"
-                    } transition-colors`}
+                  className={`w-8 h-8 ${
+                    rating >= star
+                      ? "text-yellow-400 fill-current"
+                      : "text-gray-300"
+                  } transition-colors`}
                 />
               </button>
             ))}

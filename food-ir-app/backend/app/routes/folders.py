@@ -93,15 +93,16 @@ def get_folder_recipes(folder_id):
     
     recipes = search_engine.get_by_ids(recipe_ids)
     
-    bookmark_map = {b.recipe_id: {"rating": b.rating, "created_at": b.created_at} for b in bookmarks}
+    bookmark_map = {b.recipe_id: {"bookmark_id": b.id, "rating": b.rating, "created_at": b.created_at} for b in bookmarks}
     
     merged_recipes = []
     for r in recipes:
         r_id = r.get("id")
         b_info = bookmark_map.get(r_id) 
         if b_info is None:
-             b_info = bookmark_map.get(int(r_id) if str(r_id).isdigit() else r_id, {"rating": 0, "created_at": None})
+             b_info = bookmark_map.get(int(r_id) if str(r_id).isdigit() else r_id, {"bookmark_id": None, "rating": 0, "created_at": None})
         
+        r["bookmark_id"] = b_info["bookmark_id"]
         r["rating"] = b_info["rating"]
         r["created_at"] = b_info["created_at"].isoformat() if b_info.get("created_at") else None
         r["folder_id"] = folder.id

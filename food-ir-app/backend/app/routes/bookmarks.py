@@ -73,6 +73,7 @@ def get_all_bookmarks():
 def update_bookmark(bookmark_id):
     data = request.get_json()
     rating = data.get("rating")
+    folder_id = data.get("folder_id")
     
     bookmark = Bookmark.query.filter_by(id=bookmark_id, user_id=get_current_user_id()).first()
     if not bookmark:
@@ -80,6 +81,12 @@ def update_bookmark(bookmark_id):
 
     if rating is not None:
         bookmark.rating = rating
+    if folder_id is not None:
+        folder = Folder.query.filter_by(id=folder_id, user_id=get_current_user_id()).first()
+        if folder:
+            bookmark.folder_id = folder_id
+        else:
+            return jsonify({"error": "Folder not found"}), 404
     
     db.session.commit()
     return jsonify({"message": "Bookmark updated"}), 200
@@ -124,6 +131,7 @@ def get_all_bookmarked_recipes():
     
     # Hash mapping to map recipe mappings quickly
     bookmark_map = {bookmark.recipe_id: {
+        "bookmark_id": bookmark.id,
         "rating": bookmark.rating,
         "created_at": bookmark.created_at,
         "folder_name": folder_name,
@@ -135,8 +143,9 @@ def get_all_bookmarked_recipes():
         r_id = r.get("id")
         b_info = bookmark_map.get(r_id)
         if b_info is None:
-             b_info = bookmark_map.get(int(r_id) if str(r_id).isdigit() else r_id, {"rating": 0, "created_at": None, "folder_name": None, "folder_id": None})
+             b_info = bookmark_map.get(int(r_id) if str(r_id).isdigit() else r_id, {"bookmark_id": None, "rating": 0, "created_at": None, "folder_name": None, "folder_id": None})
              
+        r["bookmark_id"] = b_info["bookmark_id"]
         r["rating"] = b_info["rating"]
         r["created_at"] = b_info["created_at"].isoformat() if b_info.get("created_at") else None
         r["folder_id"] = b_info["folder_id"]

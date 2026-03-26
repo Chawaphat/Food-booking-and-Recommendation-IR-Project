@@ -11,6 +11,7 @@ from routes.auth import auth_bp
 from routes.folders import folders_bp
 from routes.bookmarks import bookmarks_bp
 from routes.recommendations import recommendations_bp
+from routes.folder_recommend import folder_recommend_bp
 
 from config.extensions import db
 from config.database import get_db_url
@@ -41,6 +42,7 @@ def create_app():
     app.register_blueprint(folders_bp, url_prefix='/api/folders')
     app.register_blueprint(bookmarks_bp, url_prefix='/api/bookmarks')
     app.register_blueprint(recommendations_bp, url_prefix='/api')
+    app.register_blueprint(folder_recommend_bp, url_prefix='/api')
     
     @app.route('/api/health')
     def health_check():
