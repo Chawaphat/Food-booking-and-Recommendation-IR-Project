@@ -15,3 +15,8 @@ export const getRecipeDetail = async (id) => {
   const response = await api.get(`/search/${id}`);
   return response.data;
 };
+
+export const getRecommendations = async () => {
+  const response = await api.get("/recommendations");
+  return response.data;
+};

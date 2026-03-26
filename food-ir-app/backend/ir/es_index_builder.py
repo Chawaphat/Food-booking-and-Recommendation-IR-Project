@@ -47,6 +47,7 @@ def setup_index(es):
             "id": {"type": "keyword"},
             "name": {"type": "text", "analyzer": "custom_english_analyzer"},
             "description": {"type": "text", "analyzer": "custom_english_analyzer"},
+            "reviewCount": {"type": "integer"},
             "ingredients": {
                 "type": "nested",
                 "properties": {
@@ -54,10 +55,10 @@ def setup_index(es):
                     "quantity": {"type": "keyword"}
                 }
             },
-            "steps": {"type": "text", "analyzer": "custom_english_analyzer"}, # Store steps as list of strings? No, text is better for search
+            "steps": {"type": "text", "analyzer": "custom_english_analyzer"},
             "keywords": {"type": "text", "analyzer": "custom_english_analyzer"},
             "image": {"type": "keyword"},
-            "combined_text": {"type": "text", "analyzer": "custom_english_analyzer"} # catch-all field
+            "combined_text": {"type": "text", "analyzer": "custom_english_analyzer"}
         }
     }
 
@@ -101,6 +102,11 @@ def generate_docs(df):
             " ".join(keywords)
         )
         
+        try:
+            review_count = int(row["ReviewCount"]) if pd.notna(row["ReviewCount"]) else 0
+        except (ValueError, TypeError):
+            review_count = 0
+
         doc = {
             "_index": INDEX_NAME,
             "_id": str(row["RecipeId"]),
@@ -108,8 +114,9 @@ def generate_docs(df):
                 "id": str(row["RecipeId"]),
                 "name": name,
                 "description": desc,
+                "reviewCount": review_count,
                 "ingredients": ingredients,
-                "steps": steps, 
+                "steps": steps,
                 "keywords": keywords,
                 "image": image,
                 "combined_text": combined_text
