@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Flame, Sparkles, Shuffle } from "lucide-react";
+import { Search, Flame, Sparkles, Shuffle, Lock } from "lucide-react";
 import { getRecommendations } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import DishDetailModal from "../components/DishDetailModal";
 import BottomNav from "../components/BottomNav";
@@ -23,25 +24,20 @@ function RecipeRow({ recipes, onCardClick }) {
 
     const autoScroll = () => {
       if (pausedRef.current) return;
-
       const maxScrollLeft = container.scrollWidth - container.clientWidth;
       if (maxScrollLeft <= 0) return;
-
       const nextLeft = container.scrollLeft + step;
       if (nextLeft >= maxScrollLeft - 4) {
         container.scrollTo({ left: 0, behavior: "smooth" });
         return;
       }
-
       container.scrollTo({ left: nextLeft, behavior: "smooth" });
     };
 
     const intervalId = setInterval(autoScroll, intervalMs);
     return () => {
       clearInterval(intervalId);
-      if (resumeTimeoutRef.current) {
-        clearTimeout(resumeTimeoutRef.current);
-      }
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     };
   }, [recipes?.length]);
 
@@ -52,11 +48,7 @@ function RecipeRow({ recipes, onCardClick }) {
       resumeTimeoutRef.current = null;
     }
   };
-
-  const resumeAutoScroll = () => {
-    pausedRef.current = false;
-  };
-
+  const resumeAutoScroll = () => { pausedRef.current = false; };
   const pauseTemporarily = (delayMs = 4000) => {
     pauseAutoScroll();
     resumeTimeoutRef.current = setTimeout(() => {
@@ -77,10 +69,7 @@ function RecipeRow({ recipes, onCardClick }) {
       className="flex overflow-x-auto pb-4 gap-5 no-scrollbar snap-x snap-mandatory"
     >
       {recipes.map((recipe, idx) => (
-        <div
-          key={recipe.id ?? `r-${idx}`}
-          className="flex-none w-64 snap-start"
-        >
+        <div key={recipe.id ?? `r-${idx}`} className="flex-none w-64 snap-start">
           <RecipeCard recipe={recipe} onClick={onCardClick} />
         </div>
       ))}
@@ -89,7 +78,7 @@ function RecipeRow({ recipes, onCardClick }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Empty state for sections that have no data yet
+// Empty state
 // ─────────────────────────────────────────────────────────────────────────────
 function EmptySection({ message, ctaLabel, onCta }) {
   return (
@@ -109,7 +98,7 @@ function EmptySection({ message, ctaLabel, onCta }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section wrapper with icon, title, optional subtitle
+// Section wrapper
 // ─────────────────────────────────────────────────────────────────────────────
 function Section({ icon, title, subtitle, children }) {
   return (
@@ -131,17 +120,37 @@ function Section({ icon, title, subtitle, children }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Loading shimmer cards
+// Loading shimmer
 // ─────────────────────────────────────────────────────────────────────────────
 function ShimmerRow() {
   return (
     <div className="flex gap-5 overflow-hidden">
       {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="flex-none w-64 rounded-3xl bg-gray-200 animate-pulse h-52"
-        />
+        <div key={i} className="flex-none w-64 rounded-3xl bg-gray-200 animate-pulse h-52" />
       ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Login prompt banner (shown inside a section when user isn't logged in)
+// ─────────────────────────────────────────────────────────────────────────────
+function LoginPromptBanner({ onLogin }) {
+  return (
+    <div className="flex items-center gap-4 px-6 py-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-3xl border border-orange-100 text-sm">
+      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 shadow">
+        <Lock className="w-5 h-5 text-white" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-gray-800">Sign in to unlock personalized picks</p>
+        <p className="text-gray-500 text-xs mt-0.5">Your recommendations are based on your bookmarks and ratings.</p>
+      </div>
+      <button
+        onClick={onLogin}
+        className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full text-xs font-bold shadow-sm hover:from-orange-500 hover:to-red-600 transition-all flex-shrink-0"
+      >
+        Sign In
+      </button>
     </div>
   );
 }
@@ -153,7 +162,6 @@ export default function LandingPage() {
   const [query, setQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
-  // Recommendation data
   const [forYou, setForYou] = useState([]);
   const [fromFolder, setFromFolder] = useState([]);
   const [folderName, setFolderName] = useState(null);
@@ -161,8 +169,18 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
 
-  // ── Data loading ────────────────────────────────────────────────────────────
+  // ── Reset recommendation data when user logs out ───────────────────────────
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setForYou([]);
+      setFromFolder([]);
+      setFolderName(null);
+    }
+  }, [isLoggedIn]);
+
+  // ── Load recommendations ───────────────────────────────────────────────────
   useEffect(() => {
     async function loadAll() {
       try {
@@ -177,20 +195,26 @@ export default function LandingPage() {
         setLoading(false);
       }
     }
-
     loadAll();
-  }, []);
+  }, [isLoggedIn]); // Re-fetch when login state changes
 
-  // ── Search ──────────────────────────────────────────────────────────────────
+  // ── Search — requires login ────────────────────────────────────────────────
   const handleSearch = (e) => {
     e.preventDefault();
-    if (query.trim()) navigate(`/search?q=${encodeURIComponent(query)}`);
+    if (!query.trim()) return;
+
+    if (!isLoggedIn) {
+      alert("Please login first to use search.");
+      navigate("/login");
+      return;
+    }
+
+    navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* ── Main content area ─────────────────────────────────────────────── */}
       <div className="w-full">
         {/* Hero / search bar */}
         <div className="bg-white px-6 py-12 md:py-16 rounded-b-[3rem] shadow-soft mb-10">
@@ -213,7 +237,7 @@ export default function LandingPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full pl-14 pr-6 py-5 bg-gray-50 border-transparent rounded-[2rem] text-lg focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100 shadow-sm transition-all outline-none"
-                placeholder="Search for ingredients, dishes..."
+                placeholder={isLoggedIn ? "Search for ingredients, dishes..." : "Sign in to search recipes..."}
               />
               <button
                 type="submit"
@@ -225,42 +249,49 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* 3 recommendation sections */}
+        {/* Recommendation sections */}
         <div className="px-6 space-y-12 max-w-7xl mx-auto">
-          {/* ── Section 1: Recommended for you ──────────────────────────── */}
-          <Section
-            icon={<Flame className="w-5 h-5 text-orange-500 inline" />}
-            title="Recommended for you"
-            subtitle="Based on your bookmarks and ratings"
-          >
-            {loading ? (
-              <ShimmerRow />
-            ) : forYou.length > 0 ? (
-              <RecipeRow recipes={forYou} onCardClick={setSelectedRecipe} />
-            ) : (
-              <EmptySection
-                message="Bookmark and rate recipes to get personalized recommendations."
-                ctaLabel="Browse recipes"
-                onCta={() => navigate("/search?q=popular")}
-              />
-            )}
-          </Section>
 
-          {/* ── Section 2: Based on folder ───────────────────────────────── */}
+          {/* ── Section 1: Recommended for you (LOGGED-IN ONLY) ───────────── */}
+          {isLoggedIn ? (
+            <Section
+              icon={<Flame className="w-5 h-5 text-orange-500 inline" />}
+              title="Recommended for you"
+              subtitle="Based on your bookmarks and ratings"
+            >
+              {loading ? (
+                <ShimmerRow />
+              ) : forYou.length > 0 ? (
+                <RecipeRow recipes={forYou} onCardClick={setSelectedRecipe} />
+              ) : (
+                <EmptySection
+                  message="Bookmark and rate recipes to get personalized recommendations."
+                  ctaLabel="Browse recipes"
+                  onCta={() => navigate("/search?q=popular")}
+                />
+              )}
+            </Section>
+          ) : null}
+
+          {/* ── Section 2: Based on folder ─────────────────────────────────── */}
           <Section
             icon="🍜"
             title={
               folderName
                 ? `Based on your "${folderName}"`
-                : "Based on your folders"
+                : "Based on your category"
             }
             subtitle={
               folderName
                 ? `Recipes similar to what's in your ${folderName} folder`
-                : undefined
+                : isLoggedIn
+                  ? "Add recipes to folders to get folder-based picks"
+                  : undefined
             }
           >
-            {loading ? (
+            {!isLoggedIn ? (
+              <LoginPromptBanner onLogin={() => navigate("/login")} />
+            ) : loading ? (
               <ShimmerRow />
             ) : fromFolder.length > 0 ? (
               <RecipeRow recipes={fromFolder} onCardClick={setSelectedRecipe} />
@@ -277,7 +308,7 @@ export default function LandingPage() {
             )}
           </Section>
 
-          {/* ── Section 3: Discover something new ───────────────────────── */}
+          {/* ── Section 3: Discover something new ─────────────────────────── */}
           <Section
             icon={<Shuffle className="w-5 h-5 text-purple-500 inline" />}
             title="Discover something new"
@@ -294,7 +325,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── Modals ──────────────────────────────────────────────────────────── */}
       {selectedRecipe && (
         <DishDetailModal
           recipe={selectedRecipe}
@@ -302,7 +332,6 @@ export default function LandingPage() {
         />
       )}
 
-      {/* ── Bottom Navigation ───────────────────────────────────────────────── */}
       <BottomNav />
     </div>
   );

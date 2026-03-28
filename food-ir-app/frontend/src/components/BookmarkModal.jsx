@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { X, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   getFolders,
   createFolder,
   bookmarkRecipe,
   updateBookmark,
 } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function BookmarkModal({ recipe, onClose, onRefresh }) {
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
   const [folders, setFolders] = useState([]);
   const [selectedFolderId, setSelectedFolderId] = useState(
     recipe.folder_id ? recipe.folder_id.toString() : "",
@@ -20,8 +25,14 @@ export default function BookmarkModal({ recipe, onClose, onRefresh }) {
   const isEditing = !!recipe.bookmark_id;
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      onClose();
+      alert("Please login first to bookmark recipes.");
+      navigate("/login");
+      return;
+    }
     fetchFolders();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchFolders = async () => {
     try {
@@ -46,6 +57,7 @@ export default function BookmarkModal({ recipe, onClose, onRefresh }) {
       setIsCreatingFolder(false);
     } catch (error) {
       console.error("Failed to create folder", error);
+      alert("Failed to create folder. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,8 +71,6 @@ export default function BookmarkModal({ recipe, onClose, onRefresh }) {
 
     try {
       setLoading(true);
-      // We pass the unique recipe identifier. Depending on what `recipe` is, it could be `recipe.id` or `recipe.recipe_id`.
-      // Let's assume `recipe.id`
       const recipeId = recipe.id || recipe.recipe_id;
       if (!recipeId) {
         alert("Recipe ID is missing!");
@@ -80,8 +90,11 @@ export default function BookmarkModal({ recipe, onClose, onRefresh }) {
       onClose();
       if (onRefresh) onRefresh();
     } catch (error) {
+      const msg =
+        error?.response?.data?.error ||
+        "Failed to save bookmark. Please try again.";
       console.error("Failed to save bookmark", error);
-      alert("Failed to save bookmark");
+      alert(msg);
     } finally {
       setLoading(false);
     }

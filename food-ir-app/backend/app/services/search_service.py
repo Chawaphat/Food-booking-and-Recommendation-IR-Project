@@ -1,5 +1,6 @@
 import random as _random
 from config.elasticsearch import get_es_client
+from services.image_fallback_service import image_fallback_service
 
 class SearchService:
     def __init__(self):
@@ -22,10 +23,16 @@ class SearchService:
         if "id" not in source:
             source["id"] = hit["_id"]
         source["score"] = hit.get("_score", 0)
+
+        # ── Image fallback ───────────────────────────────────────────────────
+        recipe_id  = source.get("id", hit["_id"])
+        raw_image  = source.get("image", "")
+        source["image_url"] = image_fallback_service.resolve_image(recipe_id, raw_image)
+
         return source
 
     # ── Standard text search ──────────────────────────────────────────────────
-    def search(self, query, top_k=10):
+    def search(self, query, top_k=20):
         self._ensure_connected()
         try:
             response = self.es.search(

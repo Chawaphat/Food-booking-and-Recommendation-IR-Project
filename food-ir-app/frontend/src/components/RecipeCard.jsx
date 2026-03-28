@@ -54,6 +54,7 @@ export default function RecipeCard({ recipe, onClick, onRefresh }) {
         <div className="relative aspect-video overflow-hidden">
           <img
             src={
+              recipe.image_url ||
               recipe.image ||
               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800"
             }

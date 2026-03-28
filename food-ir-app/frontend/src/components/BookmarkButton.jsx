@@ -1,29 +1,34 @@
 import { useState } from 'react';
 import { Bookmark, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { bookmarkRecipe } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function BookmarkButton({ recipeId, initialRating = 0, onBookmark }) {
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [rating, setRating] = useState(initialRating);
-    const [isHovering, setIsHovering] = useState(false);
+    const { isLoggedIn } = useAuth();
+    const navigate = useNavigate();
 
     const handleBookmark = async () => {
+        if (!isLoggedIn) {
+            alert("Please login first to bookmark recipes.");
+            navigate("/login");
+            return;
+        }
         try {
             await bookmarkRecipe(recipeId, rating);
             setIsBookmarked(true);
             if (onBookmark) onBookmark();
         } catch (error) {
             console.error("Failed to bookmark", error);
+            alert("Failed to save bookmark. Please try again.");
         }
     };
 
     return (
         <div className="flex items-center gap-3">
-            <div
-                className="flex gap-1"
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-            >
+            <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                         key={star}

@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -43,7 +44,24 @@ def create_app():
     app.register_blueprint(bookmarks_bp, url_prefix='/api/bookmarks')
     app.register_blueprint(recommendations_bp, url_prefix='/api')
     app.register_blueprint(folder_recommend_bp, url_prefix='/api')
-    
+
+    # Pre-warm heavy services in a background thread so they are ready
+    # before the first request arrives.
+    def _warm_services():
+        try:
+            from services.image_fallback_service import image_fallback_service
+            image_fallback_service._load_tfidf()
+        except Exception as e:
+            print(f"[app] Image fallback warm-up failed: {e}")
+        try:
+            from services.vector_service import vector_service
+            vector_service.load()
+        except Exception as e:
+            print(f"[app] Vector service warm-up failed: {e}")
+
+    t = threading.Thread(target=_warm_services, daemon=True, name="service-warmup")
+    t.start()
+
     @app.route('/api/health')
     def health_check():
         return {"status": "ok", "message": "Backend is running!"}

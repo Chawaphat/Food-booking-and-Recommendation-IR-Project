@@ -15,6 +15,7 @@ import {
   getFolderSuggestions,
   createFolder,
 } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import DishDetailModal from "../components/DishDetailModal";
 import BottomNav from "../components/BottomNav";
@@ -110,7 +111,7 @@ function ShimmerRow() {
 function FolderCard({ folder, previewRecipes, onClick }) {
   const images = previewRecipes
     .slice(0, 3)
-    .map((r) => r.image)
+    .map((r) => r.image_url || r.image)
     .filter(Boolean);
 
   return (
@@ -172,6 +173,7 @@ function FolderCard({ folder, previewRecipes, onClick }) {
 export default function BookmarksPage() {
   const { folderId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState("recipes");
   const [folders, setFolders] = useState([]);
@@ -182,6 +184,17 @@ export default function BookmarksPage() {
   const [sort, setSort] = useState("rating");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+
+  // ── Clear all bookmark data when the authenticated user changes ────────────
+  // This prevents data leakage if a different user logs in during the same
+  // browser session.
+  useEffect(() => {
+    setFolders([]);
+    setFolderPreviews({});
+    setRecipes([]);
+    setSelectedRecipe(null);
+    setSuggestions([]);
+  }, [user?.user_id]);
 
   const handleCreateFolder = async (e) => {
     e.preventDefault();
