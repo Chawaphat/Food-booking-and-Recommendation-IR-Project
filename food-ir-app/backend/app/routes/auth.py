@@ -4,33 +4,54 @@ from models.user import User
 
 auth_bp = Blueprint("auth", __name__)
 
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password") # In a real app we'd hash this
+    data = request.get_json() or {}
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
 
     if not username or not password:
-        return jsonify({"error": "Missing credentials"}), 400
+        return jsonify({"error": "Username and password are required."}), 400
 
-    user = User.query.filter_by(username=username).first()
-    if user:
-        return jsonify({"error": "User already exists"}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": "Username already taken."}), 400
 
+    # In a production app you would hash the password with bcrypt/argon2.
+    # For this prototype we store it as-is.
     new_user = User(username=username, password_hash=password)
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "User registered successfully", "user_id": new_user.id}), 201
+    return (
+        jsonify({"message": "Account created successfully!", "user_id": new_user.id}),
+        201,
+    )
+
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    username = data.get("username")
-    
+    data = request.get_json() or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+
+    if not username or not password:
+        return jsonify({"error": "Username and password are required."}), 400
+
     user = User.query.filter_by(username=username).first()
+
     if not user:
-        # Mocking for now, if user doesn't exist just use user_id = 1
-        return jsonify({"message": "Logged in mocked", "user_id": 1}), 200
-        
-    return jsonify({"message": "Logged in", "user_id": user.id}), 200
+        return jsonify({"error": "Invalid username or password."}), 401
+
+    # Plain-text comparison (prototype only — use password hashing in production)
+    if user.password_hash != password:
+        return jsonify({"error": "Invalid username or password."}), 401
+
+    return jsonify({"message": "Logged in successfully.", "user_id": user.id}), 200
+
+
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    # Stateless prototype: client just clears its local state.
+    return jsonify({"message": "Logged out."}), 200
