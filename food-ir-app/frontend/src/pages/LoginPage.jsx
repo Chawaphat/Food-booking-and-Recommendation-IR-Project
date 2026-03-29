@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, ChefHat } from "lucide-react";
+import { Eye, EyeOff, LogIn, ChefHat, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
@@ -40,7 +40,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
       {/* Card */}
-      <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_8px_40px_-8px_rgba(0,0,0,0.12)] p-8 md:p-10">
+      <div className="relative w-full max-w-md bg-white rounded-[2rem] shadow-[0_8px_40px_-8px_rgba(0,0,0,0.12)] p-8 md:p-10">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-all"
+          title="Back to Home"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg mb-4">

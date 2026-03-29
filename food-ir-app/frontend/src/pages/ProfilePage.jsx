@@ -3,6 +3,8 @@ import { LogOut, ChefHat, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import BottomNav from "../components/BottomNav";
 
+import profilePic from "../assets/IMG_3413.jpeg";
+
 // Generate a simple avatar background color from the username
 function avatarColor(username = "") {
   const palette = [
@@ -62,11 +64,19 @@ export default function ProfilePage() {
           <div
             className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${avatarColor(
               user.username
-            )} flex items-center justify-center shadow-lg mb-5`}
+            )} flex items-center justify-center shadow-lg mb-5 overflow-hidden`}
           >
-            <span className="text-3xl font-extrabold text-white tracking-wider">
-              {initials}
-            </span>
+            {profilePic ? (
+              <img
+                src={profilePic}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-3xl font-extrabold text-white tracking-wider">
+                {initials}
+              </span>
+            )}
           </div>
 
           <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-1">

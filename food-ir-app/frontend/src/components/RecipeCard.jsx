@@ -16,12 +16,12 @@ export default function RecipeCard({ recipe, onClick, onRefresh }) {
   // Merge bookmark info from context (global) or from the recipe doc (BookmarksPage)
   const effectiveRecipe = bookmarkInfo
     ? {
-        ...recipe,
-        bookmark_id: bookmarkInfo.bookmark_id,
-        rating: bookmarkInfo.rating,
-        folder_id: bookmarkInfo.folder_id,
-        folder_name: bookmarkInfo.folder_name,
-      }
+      ...recipe,
+      bookmark_id: bookmarkInfo.bookmark_id,
+      rating: bookmarkInfo.rating,
+      folder_id: bookmarkInfo.folder_id,
+      folder_name: bookmarkInfo.folder_name,
+    }
     : recipe;
 
   const handleBookmarkClick = async (e) => {
@@ -62,11 +62,10 @@ export default function RecipeCard({ recipe, onClick, onRefresh }) {
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
           <button
             onClick={handleBookmarkClick}
-            className={`backdrop-blur-sm p-2 rounded-full shadow-sm transition-colors ${
-              isBookmarked
+            className={`backdrop-blur-sm p-2 rounded-full shadow-sm transition-colors ${isBookmarked
                 ? "bg-yellow-400/90 hover:bg-red-500 text-white"
                 : "bg-white/80 hover:bg-white text-gray-600 hover:text-red-500"
-            }`}
+              }`}
           >
             <Bookmark className="w-5 h-5 fill-current" />
           </button>
@@ -123,9 +122,29 @@ export default function RecipeCard({ recipe, onClick, onRefresh }) {
             )}
           </div>
 
-          <h3 className="font-semibold text-lg text-gray-900 mb-2 truncate">
+          <h3 className="font-semibold text-lg text-gray-900 mb-1.5 truncate">
             {recipe.name}
           </h3>
+
+          {/* User's personal bookmark rating — shown only on BookmarksPage */}
+          {isBookmarked && effectiveRecipe.rating > 0 && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={`w-3.5 h-3.5 ${n <= effectiveRecipe.rating
+                        ? "text-yellow-400 fill-current"
+                        : "text-gray-200 fill-current"
+                      }`}
+                  />
+                ))}
+              </div>
+              <span className="text-[10px] font-semibold text-gray-400">
+                My rating
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <div className="flex items-center gap-1">

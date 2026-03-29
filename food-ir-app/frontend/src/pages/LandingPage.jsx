@@ -162,8 +162,8 @@ function LoginPromptBanner({ onLogin }) {
 export default function LandingPage() {
   const [query, setQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [isFocused, setIsFocused]   = useState(false);
-  const [isTyping,  setIsTyping]    = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const searchFormRef = useRef(null);
 
   const [forYou, setForYou] = useState([]);
@@ -226,14 +226,26 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="w-full">
-        {/* Hero / search bar */}
-        <div className="bg-white px-6 py-12 md:py-16 rounded-b-[3rem] shadow-soft mb-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
+        {/* Hero / search bar — full-bleed food background */}
+        <div
+          className="relative w-full px-6 py-20 md:py-28 mb-10 overflow-hidden rounded-b-[3rem]"
+          style={{
+            backgroundImage:
+              "url('https://t3.ftcdn.net/jpg/02/52/38/80/360_F_252388016_KjPnB9vglSCuUJAumCDNbmMzGdzPAucK.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          {/* Dark gradient overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 rounded-b-[3rem]" />
+
+          {/* Content */}
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4 drop-shadow-lg">
               What are you craving?
             </h1>
-            <p className="text-lg text-gray-400 mb-8 max-w-xl mx-auto">
-              Discover your next favorite dish. Personalized just for you.
+            <p className="text-lg text-white/75 mb-8 max-w-xl mx-auto drop-shadow">
+              Search, discover, and get personalized recipe recommendations.
             </p>
             <form
               ref={searchFormRef}
@@ -241,7 +253,7 @@ export default function LandingPage() {
               className="relative max-w-2xl mx-auto transform transition-transform focus-within:scale-[1.02]"
             >
               <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-white/60" />
               </div>
               <input
                 type="text"
@@ -252,12 +264,12 @@ export default function LandingPage() {
                 }}
                 onFocus={() => { setIsFocused(true); setIsTyping(false); }}
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-                className="w-full pl-14 pr-6 py-5 bg-gray-50 border-transparent rounded-[2rem] text-lg focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100 shadow-sm transition-all outline-none"
+                className="w-full pl-14 pr-6 py-5 bg-white/15 backdrop-blur-md border border-white/30 rounded-[2rem] text-lg text-white placeholder-white/50 focus:bg-white/25 focus:border-white/50 focus:ring-4 focus:ring-white/20 shadow-lg transition-all outline-none"
                 placeholder={isLoggedIn ? "Search for ingredients, dishes..." : "Sign in to search recipes..."}
               />
               <button
                 type="submit"
-                className="absolute inset-y-2 right-2 px-6 bg-black text-white hover:bg-gray-800 rounded-full font-medium transition-colors shadow-soft"
+                className="absolute inset-y-2 right-2 px-6 bg-white text-gray-900 hover:bg-gray-100 rounded-full font-semibold transition-colors shadow-md"
               >
                 Search
               </button>
