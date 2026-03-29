@@ -8,9 +8,7 @@ import DishDetailModal from "../components/DishDetailModal";
 import BottomNav from "../components/BottomNav";
 import TrendingDropdown from "../components/TrendingDropdown";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Horizontal scrollable section of recipe cards
-// ─────────────────────────────────────────────────────────────────────────────
 function RecipeRow({ recipes, onCardClick }) {
   const containerRef = useRef(null);
   const pausedRef = useRef(false);
@@ -78,9 +76,7 @@ function RecipeRow({ recipes, onCardClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Empty state
-// ─────────────────────────────────────────────────────────────────────────────
 function EmptySection({ message, ctaLabel, onCta }) {
   return (
     <div className="flex items-center gap-4 px-6 py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 text-sm">
@@ -98,9 +94,7 @@ function EmptySection({ message, ctaLabel, onCta }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Section wrapper
-// ─────────────────────────────────────────────────────────────────────────────
 function Section({ icon, title, subtitle, children }) {
   return (
     <section>
@@ -120,9 +114,7 @@ function Section({ icon, title, subtitle, children }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Loading shimmer
-// ─────────────────────────────────────────────────────────────────────────────
 function ShimmerRow() {
   return (
     <div className="flex gap-5 overflow-hidden">
@@ -133,9 +125,7 @@ function ShimmerRow() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Login prompt banner (shown inside a section when user isn't logged in)
-// ─────────────────────────────────────────────────────────────────────────────
 function LoginPromptBanner({ onLogin }) {
   return (
     <div className="flex items-center gap-4 px-6 py-6 bg-gradient-to-r from-orange-50 to-red-50 rounded-3xl border border-orange-100 text-sm">
@@ -156,9 +146,7 @@ function LoginPromptBanner({ onLogin }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Main component
-// ─────────────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [query, setQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);

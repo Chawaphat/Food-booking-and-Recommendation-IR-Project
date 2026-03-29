@@ -24,7 +24,6 @@ def require_auth():
     return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 @bookmarks_bp.route("", methods=["POST"])
 def add_bookmark():
     auth_err = require_auth()

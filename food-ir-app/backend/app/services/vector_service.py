@@ -1,27 +1,3 @@
-"""
-vector_service.py
-─────────────────
-Hybrid folder-based recommendations:
-  Stage 1 – TF-IDF cosine similarity → retrieve top-50 candidates (fast)
-  Stage 2 – LightGBM binary classifier → re-rank candidates (< 1ms)
-
-If the LightGBM model file is missing, falls back to TF-IDF ranking only.
-
-Scoring (LightGBM features):
-  1. similarity_score  – cosine sim between folder profile and candidate
-  2. avg_rating        – recipe's global average rating
-  3. log_review_count  – log1p(review_count)
-
-Model file:
-  data/processed/lightgbm_model.txt
-
-Artifacts loaded once at startup:
-  • data/processed/tfidf_matrix.pkl
-  • data/processed/recipe_ids.pkl
-  • data/processed/recipe_meta.csv
-  • data/processed/lightgbm_model.txt   (optional)
-"""
-
 from __future__ import annotations
 
 import os
@@ -36,7 +12,6 @@ _DATA_DIR = os.path.join(
     "..", "..", "data", "processed"
 )
 
-# How many TF-IDF candidates to retrieve before LightGBM re-ranks them
 _CANDIDATE_K = 50
 
 
@@ -52,21 +27,16 @@ class VectorService:
         self._lgbm_model = None   # lightgbm.Booster or None
         self._loaded = False
 
-    # ── Loading ───────────────────────────────────────────────────────────────
-
     def load(self):
-        """Load all artifacts from disk (called once at startup)."""
-        # TF-IDF matrix
+        """Load recommendation artifacts from disk."""
         with open(os.path.join(_DATA_DIR, "tfidf_matrix.pkl"), "rb") as f:
             self._tfidf_matrix = pickle.load(f)
 
-        # Recipe IDs
         with open(os.path.join(_DATA_DIR, "recipe_ids.pkl"), "rb") as f:
             raw_ids = pickle.load(f)
         self._recipe_ids = [str(r) for r in raw_ids]
         self._id_to_idx  = {rid: i for i, rid in enumerate(self._recipe_ids)}
 
-        # Metadata — build aligned numpy arrays for vectorised feature creation
         meta = pd.read_csv(
             os.path.join(_DATA_DIR, "recipe_meta.csv"),
             dtype={"RecipeId": str},
@@ -84,7 +54,6 @@ class VectorService:
             dtype=np.float32,
         )
 
-        # LightGBM model (optional – if missing, falls back to TF-IDF ranking)
         lgbm_path = os.path.join(_DATA_DIR, "lightgbm_model.txt")
         if os.path.exists(lgbm_path):
             try:
@@ -108,13 +77,8 @@ class VectorService:
         if not self._loaded:
             self.load()
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
-
     def _build_profile(self, recipe_ids_in_folder: List) -> Optional[np.ndarray]:
-        """
-        Build a unit-normalised folder profile vector (mean of bookmarked
-        recipes' TF-IDF rows).  Returns None if no valid rows found.
-        """
+        """Build a normalized folder profile vector."""
         from scipy.sparse import vstack
         rows = []
         for rid in recipe_ids_in_folder:
@@ -133,11 +97,7 @@ class VectorService:
         exclude_set: set,
         k: int,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Return (indices, cosine_similarities) for the top-k candidates after
-        excluding blocked recipe indices.
-        Uses argpartition for O(N) speed on 500k vectors.
-        """
+        """Return top-k candidate indices and cosine similarity scores."""
         sims = (self._tfidf_matrix @ profile).ravel()  # (N,)
 
         # Zero-out excluded recipes
@@ -150,8 +110,6 @@ class VectorService:
         part = np.argpartition(sims, -actual_k)[-actual_k:]
         top_indices = part[np.argsort(sims[part])[::-1]]
         return top_indices, sims[top_indices]
-
-    # ── Public API ────────────────────────────────────────────────────────────
 
     def get_vector(self, recipe_id) -> Optional[List[float]]:
         """Return dense TF-IDF vector for a recipe, or None."""
@@ -167,20 +125,9 @@ class VectorService:
         exclude_ids: Optional[List] = None,
         top_k: int = 10,
     ) -> List[Dict]:
-        """
-        Return top-k recommendations for a folder.
-
-        Pipeline:
-          1. Build folder profile (mean TF-IDF vector).
-          2. Retrieve top-50 candidates via cosine similarity (TF-IDF stage).
-          3. Build feature matrix [sim, avg_rating, log_reviews] for candidates.
-          4. If LightGBM is available: predict P(like) and rank by it.
-             Otherwise: rank by TF-IDF score + rating + popularity boost.
-          5. Return top_k results as [{recipe_id, score}].
-        """
+        """Return top-k recommendations for a folder."""
         self._ensure_loaded()
 
-        # ── Stage 1: TF-IDF candidate retrieval ──────────────────────────────
         profile = self._build_profile(folder_recipe_ids)
         if profile is None:
             return []
@@ -199,22 +146,16 @@ class VectorService:
         if len(top_indices) == 0:
             return []
 
-        # ── Stage 2: Build feature matrix for candidates ──────────────────────
         avg_r  = self._avg_rating[top_indices]       # (k,)
         log_rc = np.log1p(self._review_count[top_indices])  # (k,)
 
         features = np.column_stack([top_sims, avg_r, log_rc]).astype(np.float32)
-        # features shape: (k, 3) — [sim, avg_rating, log_reviews]
 
-        # ── Stage 3: Score candidates ─────────────────────────────────────────
         if self._lgbm_model is not None:
-            # LightGBM predicts P(user likes recipe) — higher = better
             scores = self._lgbm_model.predict(features)  # (k,)
         else:
-            # Fallback: linear combination identical to pre-ML version
             scores = top_sims + 0.2 * avg_r + 0.1 * log_rc
 
-        # ── Stage 4: Rank and return top_k ───────────────────────────────────
         ranked = np.argsort(scores)[::-1][:top_k]
 
         return [
@@ -225,6 +166,4 @@ class VectorService:
             for i in ranked
         ]
 
-
-# Singleton — loaded lazily on first call (or eagerly via app.py warmup thread)
 vector_service = VectorService()

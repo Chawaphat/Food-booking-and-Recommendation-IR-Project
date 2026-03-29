@@ -51,14 +51,12 @@ class SearchService:
         raw_image  = source.get("image", "")
         source["image_url"] = image_fallback_service.resolve_image(recipe_id, raw_image)
 
-        # ── Rating metadata (from recipe_meta.csv) ───────────────────────────
         avg_r, rev_cnt = _META_MAP.get(str(recipe_id), (0.0, 0.0))
         source["avg_rating"]    = round(avg_r, 2)
         source["review_count"] = int(rev_cnt)
 
         return source
 
-    # ── Standard text search ──────────────────────────────────────────────────
     def search(self, query, top_k=20):
         self._ensure_connected()
         try:
@@ -86,7 +84,6 @@ class SearchService:
             print(f"Error searching Elasticsearch: {e}")
             return []
 
-    # ── Search with spell suggestions ─────────────────────────────────────────
     def search_with_suggestions(self, query, top_k=20):
         
         self._ensure_connected()
@@ -145,7 +142,6 @@ class SearchService:
 
         results = [self._clean_hit(h) for h in response["hits"]["hits"]]
 
-        # ── Parse per-token corrections ───────────────────────────────────────
         name_tokens = response["suggest"].get("name_suggest", [])
         ingr_tokens = response["suggest"].get("ingr_suggest", [])
 
@@ -167,7 +163,6 @@ class SearchService:
 
         corrected_query = " ".join(corrected_tokens) if any_corrected else None
 
-        # ── Collect unique alternative suggestions ────────────────────────────
         suggestions = []
         seen = set()
         for i, token in enumerate(name_tokens):
@@ -186,7 +181,6 @@ class SearchService:
             "corrected_query": corrected_query,
         }
 
-    # ── Fetch by IDs ──────────────────────────────────────────────────────────
     def get_by_ids(self, recipe_ids):
         self._ensure_connected()
         if not recipe_ids:
@@ -206,7 +200,6 @@ class SearchService:
             print(f"Error executing terms query in Elasticsearch: {e}")
             return []
 
-    # ── Personalised recommendations with reviewCount boost ───────────────────
     def recommend(self, signals, exclude_ids=None, top_k=10):
         
         self._ensure_connected()
@@ -261,7 +254,6 @@ class SearchService:
             print(f"Error in recommend(): {e}")
             return []
 
-    # ── Popularity-biased random (for "Discover") ─────────────────────────────
     def popular_random(self, exclude_ids=None, top_k=10):
         
         self._ensure_connected()
@@ -280,7 +272,6 @@ class SearchService:
                 for h in response["hits"]["hits"]
                 if str(h["_source"].get("id", h["_id"])) not in exclude_ids
             ]
-            # Random sample from candidates
             sample_size = min(top_k, len(candidates))
             return _random.sample(candidates, sample_size)
         except Exception as e:

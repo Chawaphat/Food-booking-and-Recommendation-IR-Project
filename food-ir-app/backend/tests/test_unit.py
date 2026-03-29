@@ -16,9 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 import pytest
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Test 1: TF-IDF Cosine Similarity (IR Core)
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestSimilarityFunction:
     """
@@ -56,9 +54,7 @@ class TestSimilarityFunction:
         assert results == []
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Test 2: Search Service (IR — BM25 / Elasticsearch)
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestSearchService:
     """

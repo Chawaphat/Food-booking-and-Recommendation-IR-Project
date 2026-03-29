@@ -1,19 +1,6 @@
-"""
-build_vector_index.py
-─────────────────────
-Creates the Elasticsearch index `recipes_vector` and bulk-indexes TF-IDF
-embeddings from the pre-built pickle artifacts.
-
-Run once (from the backend/ directory):
-  path/to/venv/bin/python3 ir/build_vector_index.py
-
-Requirements: scipy, scikit-learn  (same env used to build the TF-IDF model)
-"""
-
 import sys
 import os
 
-# Ensure app config is importable
 BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
@@ -25,7 +12,7 @@ from elasticsearch import helpers
 from app.config.elasticsearch import get_es_client
 
 INDEX_NAME = "recipes_vector"
-VECTOR_DIMS = 4096  # Elasticsearch dense_vector dims limit in this setup
+VECTOR_DIMS = 4096
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "processed")
 
@@ -53,7 +40,6 @@ def generate_docs(tfidf_matrix, recipe_ids, meta_df):
     meta_lookup = meta_df.set_index("RecipeId").to_dict("index")
 
     for idx, recipe_id in enumerate(recipe_ids):
-        # Convert sparse row → dense list
         vec = tfidf_matrix[idx].toarray()[0].tolist()[:VECTOR_DIMS]
 
         meta = meta_lookup.get(recipe_id, {})

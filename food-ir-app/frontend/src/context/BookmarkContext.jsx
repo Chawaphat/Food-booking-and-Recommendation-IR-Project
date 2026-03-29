@@ -1,23 +1,17 @@
-/**
- * BookmarkContext
- * ───────────────
- * Global store of the current user's bookmarked recipe IDs.
- * Fetched once after login, refreshed whenever a bookmark changes.
- *
- * Provides:
- *   bookmarkMap       – Map<string, {bookmark_id, rating, folder_id, folder_name}>
- *   isRecipeBookmarked(recipeId) – boolean
- *   getBookmarkInfo(recipeId)    – the map entry or undefined
- *   refreshBookmarks()           – refetch from API
- */
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { getBookmarks } from "../services/bookmark";
 import { useAuth } from "./AuthContext";
 
 export const BookmarkContext = createContext(null);
 
 export function BookmarkProvider({ children }) {
-  // Map<string, {bookmark_id, rating, folder_id, folder_name}>
   const [bookmarkMap, setBookmarkMap] = useState(new Map());
   const { isLoggedIn } = useAuth();
   const fetchingRef = useRef(false);
@@ -26,7 +20,7 @@ export function BookmarkProvider({ children }) {
     if (!isLoggedIn || fetchingRef.current) return;
     fetchingRef.current = true;
     try {
-      const data = await getBookmarks(); // [{id, recipe_id, rating, folder_id, folder_name}]
+      const data = await getBookmarks();
       const map = new Map();
       data.forEach((b) => {
         map.set(String(b.recipe_id), {
@@ -44,7 +38,6 @@ export function BookmarkProvider({ children }) {
     }
   }, [isLoggedIn]);
 
-  // Load on login, clear on logout
   useEffect(() => {
     if (isLoggedIn) {
       refreshBookmarks();
@@ -55,17 +48,22 @@ export function BookmarkProvider({ children }) {
 
   const isRecipeBookmarked = useCallback(
     (recipeId) => bookmarkMap.has(String(recipeId)),
-    [bookmarkMap]
+    [bookmarkMap],
   );
 
   const getBookmarkInfo = useCallback(
     (recipeId) => bookmarkMap.get(String(recipeId)),
-    [bookmarkMap]
+    [bookmarkMap],
   );
 
   return (
     <BookmarkContext.Provider
-      value={{ bookmarkMap, isRecipeBookmarked, getBookmarkInfo, refreshBookmarks }}
+      value={{
+        bookmarkMap,
+        isRecipeBookmarked,
+        getBookmarkInfo,
+        refreshBookmarks,
+      }}
     >
       {children}
     </BookmarkContext.Provider>
@@ -74,6 +72,7 @@ export function BookmarkProvider({ children }) {
 
 export function useBookmarks() {
   const ctx = useContext(BookmarkContext);
-  if (!ctx) throw new Error("useBookmarks must be used inside <BookmarkProvider>");
+  if (!ctx)
+    throw new Error("useBookmarks must be used inside <BookmarkProvider>");
   return ctx;
 }

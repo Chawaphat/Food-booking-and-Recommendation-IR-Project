@@ -20,7 +20,6 @@ def require_auth():
     return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 @folders_bp.route("", methods=["POST"])
 def create_folder():
     auth_err = require_auth()

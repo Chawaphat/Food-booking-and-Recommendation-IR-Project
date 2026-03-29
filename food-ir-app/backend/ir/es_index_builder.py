@@ -7,7 +7,6 @@ import pandas as pd
 import re
 from elasticsearch import helpers
 from app.config.elasticsearch import get_es_client
-from ir.preprocess import preprocess, clean_list_field 
 
 
 INDEX_NAME = "recipes"

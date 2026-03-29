@@ -7,7 +7,6 @@ import RecipeCard from "../components/RecipeCard";
 import DishDetailModal from "../components/DishDetailModal";
 import TrendingDropdown from "../components/TrendingDropdown";
 
-/* ─── Highlighted suggestion text ───────────────────────────────────────────*/
 function HighlightedQuery({ original, corrected }) {
   if (!corrected) return <strong>{corrected}</strong>;
   const origTokens = original.toLowerCase().split(/\s+/);
@@ -30,7 +29,6 @@ function HighlightedQuery({ original, corrected }) {
   );
 }
 
-/* ─── Spell banner ───────────────────────────────────────────────────────────*/
 function SpellBanner({ originalQuery, correctedQuery, suggestions, onSelect }) {
   if (!correctedQuery && suggestions.length === 0) return null;
   return (
@@ -73,13 +71,12 @@ function SpellBanner({ originalQuery, correctedQuery, suggestions, onSelect }) {
   );
 }
 
-/* ─── Trending results banner ────────────────────────────────────────────────*/
 function TrendingBanner({ keyword }) {
   if (!keyword) return null;
   return (
     <div className="max-w-6xl mx-auto px-6 pt-6">
-      <div className="flex items-center gap-3 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100 rounded-2xl px-5 py-3.5">
-        <div className="w-7 h-7 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-sm">
+      <div className="flex items-center gap-3 bg-linear-to-r from-orange-50 to-red-50 border border-orange-100 rounded-2xl px-5 py-3.5">
+        <div className="w-7 h-7 bg-linear-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-sm">
           <TrendingUp className="w-4 h-4 text-white" />
         </div>
         <div>
@@ -99,11 +96,10 @@ function TrendingBanner({ keyword }) {
   );
 }
 
-/* ─── Main SearchPage ────────────────────────────────────────────────────────*/
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
-  const trendingKw = searchParams.get("trending") || ""; // ?trending=chicken
+  const trendingKw = searchParams.get("trending") || "";
   const navigate = useNavigate();
 
   const [query, setQuery] = useState(initialQuery || trendingKw);
@@ -117,9 +113,8 @@ export default function SearchPage() {
   const [activeTrending, setActiveTrending] = useState(trendingKw);
 
   const lastQueryRef = useRef(initialQuery || trendingKw);
-  const searchFormRef = useRef(null); // passed to TrendingDropdown for width sync
+  const searchFormRef = useRef(null);
 
-  // Run search on URL change
   useEffect(() => {
     if (initialQuery) {
       lastQueryRef.current = initialQuery;
@@ -128,7 +123,6 @@ export default function SearchPage() {
     }
   }, [initialQuery]);
 
-  // Run trending fetch on URL change
   useEffect(() => {
     if (trendingKw) {
       lastQueryRef.current = trendingKw;
@@ -154,7 +148,6 @@ export default function SearchPage() {
     }
   };
 
-  // Fetch trending results for a keyword – popularity-ranked, NOT search-ranked
   const fetchTrending = async (kw) => {
     setLoading(true);
     setSuggestions([]);
@@ -186,14 +179,12 @@ export default function SearchPage() {
     navigate(`/search?q=${encodeURIComponent(suggested)}`);
   };
 
-  // Called when user clicks a trending chip
   const handleTrendingClick = (kw) => {
     setQuery(kw);
     setIsFocused(false);
     navigate(`/search?trending=${encodeURIComponent(kw)}`);
   };
 
-  // Result header text
   const headerText = () => {
     if (loading) return "Searching…";
     if (activeTrending)
@@ -203,7 +194,6 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* ── Sticky header ────────────────────────────────────────────────────*/}
       <div className="bg-white px-6 py-8 border-b border-gray-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex items-center gap-6">
           <button
@@ -213,7 +203,6 @@ export default function SearchPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          {/* Search form with trending dropdown */}
           <form
             ref={searchFormRef}
             onSubmit={handleSearch}
@@ -235,13 +224,12 @@ export default function SearchPage() {
                 setIsTyping(false);
               }}
               onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-              className="w-full pl-12 pr-6 py-4 bg-gray-50 border-transparent rounded-[2rem]
+              className="w-full pl-12 pr-6 py-4 bg-gray-50 border-transparent rounded-4xl
                          focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100
                          transition-all outline-none"
               placeholder="Search for ingredients, dishes…"
             />
 
-            {/* Trending dropdown – visible when input is focused and user hasn't started typing */}
             <TrendingDropdown
               visible={isFocused && !isTyping}
               onKeywordClick={handleTrendingClick}
@@ -258,12 +246,10 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* ── Trending mode banner ──────────────────────────────────────────────*/}
       {!loading && activeTrending && (
         <TrendingBanner keyword={activeTrending} />
       )}
 
-      {/* ── Spell-correction banner ───────────────────────────────────────────*/}
       {!loading && !activeTrending && (
         <SpellBanner
           originalQuery={lastQueryRef.current}
@@ -273,7 +259,6 @@ export default function SearchPage() {
         />
       )}
 
-      {/* ── Results grid ─────────────────────────────────────────────────────*/}
       <div className="max-w-6xl mx-auto px-6 mt-8">
         <h2 className="text-xl font-medium text-gray-500 mb-8">
           {headerText()}
@@ -309,7 +294,6 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* ── Detail modal ─────────────────────────────────────────────────────*/}
       {selectedRecipe && (
         <DishDetailModal
           recipe={selectedRecipe}

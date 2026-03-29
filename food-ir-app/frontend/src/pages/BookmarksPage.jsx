@@ -169,7 +169,6 @@ function FolderCard({ folder, previewRecipes, onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 export default function BookmarksPage() {
   const { folderId } = useParams();
   const navigate = useNavigate();
@@ -456,7 +455,7 @@ export default function BookmarksPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-dashed border-gray-200 mt-4">
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-4xl border border-dashed border-gray-200 mt-4">
                   <Star className="w-12 h-12 text-gray-300 mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     No bookmarks found
@@ -469,10 +468,8 @@ export default function BookmarksPage() {
                 </div>
               ))}
 
-            {/* ── UC-008: Suggestion section (folder view only) ───────────── */}
             {folderId && (
               <div className="mt-12">
-                {/* Divider */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="flex-1 h-px bg-gray-200" />
                   <span className="text-xs font-bold tracking-widest uppercase text-gray-400">
@@ -482,7 +479,7 @@ export default function BookmarksPage() {
                 </div>
 
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl shadow">
+                  <span className="w-9 h-9 flex items-center justify-center bg-linear-to-br from-orange-400 to-red-500 rounded-2xl shadow">
                     <Sparkles className="w-5 h-5 text-white" />
                   </span>
                   <div>
@@ -506,7 +503,7 @@ export default function BookmarksPage() {
                   />
                 ) : (
                   <div className="flex items-center gap-4 px-6 py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 text-sm">
-                    <Sparkles className="w-5 h-5 flex-shrink-0 text-gray-300" />
+                    <Sparkles className="w-5 h-5 shrink-0 text-gray-300" />
                     <span>
                       Suggestions appear once the vector index is built and this
                       folder has bookmarks.
@@ -519,7 +516,6 @@ export default function BookmarksPage() {
         )}
       </div>
 
-      {/* ── Modals & Navigation ─────────────────────────────────────────────── */}
       {selectedRecipe && (
         <DishDetailModal
           recipe={selectedRecipe}

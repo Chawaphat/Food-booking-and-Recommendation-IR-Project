@@ -47,9 +47,7 @@ describe('Application User Flows (Integration)', () => {
     vi.clearAllMocks();
   });
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // Flow 1: Login -> Redirect
-  // ─────────────────────────────────────────────────────────────────────────────
   test('Flow 1: User logs in successfully and redirects to home', async () => {
     const authValue = { login: mockLogin, user: null, isLoggedIn: false };
     mockLogin.mockResolvedValueOnce(true);
@@ -70,9 +68,7 @@ describe('Application User Flows (Integration)', () => {
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // Flow 2: Search Interaction
-  // ─────────────────────────────────────────────────────────────────────────────
   test('Flow 2: Authenticated user searches and navigates to results', async () => {
     const authValue = { login: mockLogin, user: { username: 'testuser' }, isLoggedIn: true };
     renderWithProviders(<LandingPage />, authValue);
@@ -90,9 +86,7 @@ describe('Application User Flows (Integration)', () => {
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // Flow 3: Protected UI (Unauthenticated Search Attempt)
-  // ─────────────────────────────────────────────────────────────────────────────
   test('Flow 3: Unauthenticated user is blocked from searching and redirected', async () => {
     const authValue = { login: vi.fn(), user: null, isLoggedIn: false };
     renderWithProviders(<LandingPage />, authValue);

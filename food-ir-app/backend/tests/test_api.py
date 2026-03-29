@@ -6,9 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 import pytest
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # App fixture — in-memory SQLite, mocked ES + heavy services
-# ─────────────────────────────────────────────────────────────────────────────
 
 @pytest.fixture(scope="module")
 def app():
@@ -84,9 +82,7 @@ def registered_user(client):
     return payload
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Flow 1: Register → Login → Search → Bookmark
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestLoginSearchBookmarkFlow:
     """Simulates a complete authenticated user journey."""
@@ -160,9 +156,7 @@ class TestLoginSearchBookmarkFlow:
         assert bm_resp.status_code in (200, 201)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Flow 2: Unauthorised Access
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestUnauthorisedAccess:
     """Protected endpoints must reject requests without X-User-Id header."""
