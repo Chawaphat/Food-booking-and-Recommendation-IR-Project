@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, LogIn, ArrowLeft, ChefHat } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
 
@@ -53,12 +53,18 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img src={logo} alt="FoodIR Logo" className="w-[150px] mb-4" />
+          <div className="w-24 h-24  overflow-hidden">
+            <img
+              src="src/assets/logo.png" // ใส่ path รูปของคุณ
+              alt="profile"
+              className="w-32 h-32 object-cover scale-150"
+            />
+          </div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             Welcome back
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            Sign in to your FoodIR account
+            Sign in to your Mealio account
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, UserPlus, ArrowLeft, ChefHat } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
 
@@ -68,7 +68,13 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img src={logo} alt="FoodIR Logo" className="w-[150px] mb-4" />
+          <div className="w-24 h-24  overflow-hidden">
+            <img
+              src="src/assets/logo.png" //
+              alt="profile"
+              className="w-32 h-32 object-cover scale-150"
+            />
+          </div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             Create an account
           </h1>
