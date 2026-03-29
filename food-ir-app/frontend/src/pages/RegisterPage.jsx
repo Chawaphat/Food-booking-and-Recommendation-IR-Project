@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UserPlus, ChefHat, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.png";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -67,13 +68,13 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg mb-4">
-            <ChefHat className="w-8 h-8 text-white" />
-          </div>
+          <img src={logo} alt="FoodIR Logo" className="w-[150px] mb-4" />
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             Create an account
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Start bookmarking your favorite recipes</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Start bookmarking your favorite recipes
+          </p>
         </div>
 
         {/* Error banner */}
@@ -146,7 +147,11 @@ export default function RegisterPage() {
                 className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -175,17 +180,22 @@ export default function RegisterPage() {
                 className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label={showConfirm ? "Hide password" : "Show password"}
               >
-                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirm ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
 
             {/* Password match indicator */}
             {confirmPassword && (
               <p
-                className={`text-xs mt-1.5 font-medium ${password === confirmPassword
+                className={`text-xs mt-1.5 font-medium ${
+                  password === confirmPassword
                     ? "text-green-500"
                     : "text-red-400"
-                  }`}
+                }`}
               >
                 {password === confirmPassword
                   ? "✓ Passwords match"

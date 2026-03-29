@@ -14,7 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { getBookmarks } from "../services/bookmark";
 import { useAuth } from "./AuthContext";
 
-const BookmarkContext = createContext(null);
+export const BookmarkContext = createContext(null);
 
 export function BookmarkProvider({ children }) {
   // Map<string, {bookmark_id, rating, folder_id, folder_name}>

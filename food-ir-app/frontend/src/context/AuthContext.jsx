@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import client from "../services/client";
 
 // ─── Context ─────────────────────────────────────────────────────────────────
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 const STORAGE_KEY = "foodir_auth";
 

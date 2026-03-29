@@ -49,7 +49,7 @@ export default function BookmarkSidebar({
           </div>
           {open && (
             <span className="font-bold text-gray-900 truncate">
-              My Bookmarks
+              My Bookmark
             </span>
           )}
         </div>
@@ -70,9 +70,7 @@ export default function BookmarkSidebar({
                   return (
                     <div
                       key={folder.id}
-                      onClick={() =>
-                        navigate(`/bookmarks/folder/${folder.id}`)
-                      }
+                      onClick={() => navigate(`/bookmarks/folder/${folder.id}`)}
                       className="group cursor-pointer rounded-2xl overflow-hidden bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-all duration-200"
                     >
                       {/* Image mosaic */}
@@ -108,15 +106,12 @@ export default function BookmarkSidebar({
                 {/* Folders with no recipes */}
                 {folders
                   .filter(
-                    (f) =>
-                      !folderPreviews.some((fp) => fp.folder.id === f.id),
+                    (f) => !folderPreviews.some((fp) => fp.folder.id === f.id),
                   )
                   .map((folder) => (
                     <div
                       key={folder.id}
-                      onClick={() =>
-                        navigate(`/bookmarks/folder/${folder.id}`)
-                      }
+                      onClick={() => navigate(`/bookmarks/folder/${folder.id}`)}
                       className="group cursor-pointer rounded-2xl overflow-hidden bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-all duration-200 px-3 py-3 flex items-center gap-2"
                     >
                       <FolderIcon className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />

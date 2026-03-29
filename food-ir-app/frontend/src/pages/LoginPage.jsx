@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, ChefHat, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.png";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -52,9 +53,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg mb-4">
-            <ChefHat className="w-8 h-8 text-white" />
-          </div>
+          <img src={logo} alt="FoodIR Logo" className="w-[150px] mb-4" />
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             Welcome back
           </h1>
