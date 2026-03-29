@@ -13,9 +13,8 @@ function NavAvatar({ username }) {
     "bg-green-500",
   ];
   const idx =
-    (username || "")
-      .split("")
-      .reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % colors.length;
+    (username || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) %
+    colors.length;
   const initials = (username || "?").slice(0, 1).toUpperCase();
   return (
     <div
@@ -61,9 +60,7 @@ export default function BottomNav() {
             isBookmark ? "text-red-600" : "text-gray-400 hover:text-gray-600"
           }`}
         >
-          <Bookmark
-            className={`w-6 h-6 ${isBookmark ? "fill-current" : ""}`}
-          />
+          <Bookmark className={`w-6 h-6 ${isBookmark ? "fill-current" : ""}`} />
           <span className="text-[10px] font-bold tracking-widest">
             BOOKMARK
           </span>
@@ -91,7 +88,8 @@ export default function BottomNav() {
             id="nav-login"
             onClick={() => navigate("/login")}
             className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${
-              location.pathname === "/login" || location.pathname === "/register"
+              location.pathname === "/login" ||
+              location.pathname === "/register"
                 ? "text-red-600"
                 : "text-gray-400 hover:text-gray-600"
             }`}

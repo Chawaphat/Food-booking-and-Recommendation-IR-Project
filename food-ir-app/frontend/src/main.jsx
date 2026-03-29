@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { BookmarkProvider } from './context/BookmarkContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <BookmarkProvider>
+        <App />
+      </BookmarkProvider>
     </AuthProvider>
   </StrictMode>,
 )

@@ -13,6 +13,8 @@ from routes.folders import folders_bp
 from routes.bookmarks import bookmarks_bp
 from routes.recommendations import recommendations_bp
 from routes.folder_recommend import folder_recommend_bp
+from routes.trending import trending_bp
+from routes.similar import similar_bp
 
 from config.extensions import db
 from config.database import get_db_url
@@ -44,6 +46,8 @@ def create_app():
     app.register_blueprint(bookmarks_bp, url_prefix='/api/bookmarks')
     app.register_blueprint(recommendations_bp, url_prefix='/api')
     app.register_blueprint(folder_recommend_bp, url_prefix='/api')
+    app.register_blueprint(trending_bp, url_prefix='/api')
+    app.register_blueprint(similar_bp, url_prefix='/api')
 
     # Pre-warm heavy services in a background thread so they are ready
     # before the first request arrives.
@@ -58,6 +62,16 @@ def create_app():
             vector_service.load()
         except Exception as e:
             print(f"[app] Vector service warm-up failed: {e}")
+        try:
+            from services.trending_service import trending_service
+            trending_service.load()
+        except Exception as e:
+            print(f"[app] Trending service warm-up failed: {e}")
+        try:
+            from services.similar_service import similar_service
+            similar_service.load()
+        except Exception as e:
+            print(f"[app] Similar service warm-up failed: {e}")
 
     t = threading.Thread(target=_warm_services, daemon=True, name="service-warmup")
     t.start()

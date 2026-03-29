@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import DishDetailModal from "../components/DishDetailModal";
 import BottomNav from "../components/BottomNav";
+import TrendingDropdown from "../components/TrendingDropdown";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Horizontal scrollable section of recipe cards
@@ -161,6 +162,9 @@ function LoginPromptBanner({ onLogin }) {
 export default function LandingPage() {
   const [query, setQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [isFocused, setIsFocused]   = useState(false);
+  const [isTyping,  setIsTyping]    = useState(false);
+  const searchFormRef = useRef(null);
 
   const [forYou, setForYou] = useState([]);
   const [fromFolder, setFromFolder] = useState([]);
@@ -212,6 +216,12 @@ export default function LandingPage() {
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
+  // ── Trending chip click ────────────────────────────────────────────────────
+  const handleTrendingClick = (kw) => {
+    setIsFocused(false);
+    navigate(`/search?trending=${encodeURIComponent(kw)}`);
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -226,6 +236,7 @@ export default function LandingPage() {
               Discover your next favorite dish. Personalized just for you.
             </p>
             <form
+              ref={searchFormRef}
               onSubmit={handleSearch}
               className="relative max-w-2xl mx-auto transform transition-transform focus-within:scale-[1.02]"
             >
@@ -235,7 +246,12 @@ export default function LandingPage() {
               <input
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setIsTyping(true);
+                }}
+                onFocus={() => { setIsFocused(true); setIsTyping(false); }}
+                onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 className="w-full pl-14 pr-6 py-5 bg-gray-50 border-transparent rounded-[2rem] text-lg focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100 shadow-sm transition-all outline-none"
                 placeholder={isLoggedIn ? "Search for ingredients, dishes..." : "Sign in to search recipes..."}
               />
@@ -245,6 +261,13 @@ export default function LandingPage() {
               >
                 Search
               </button>
+
+              {/* Trending dropdown – opens on focus, hides when typing */}
+              <TrendingDropdown
+                visible={isFocused && !isTyping}
+                onKeywordClick={handleTrendingClick}
+                containerRef={searchFormRef}
+              />
             </form>
           </div>
         </div>

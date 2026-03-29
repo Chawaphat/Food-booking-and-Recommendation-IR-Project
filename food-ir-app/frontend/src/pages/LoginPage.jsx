@@ -49,7 +49,9 @@ export default function LoginPage() {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             Welcome back
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Sign in to your FoodIR account</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Sign in to your FoodIR account
+          </p>
         </div>
 
         {/* Error banner */}
