@@ -56,11 +56,7 @@ export default function RecipeCard({ recipe, onClick, onRefresh }) {
     <>
       <div
         onClick={() => onClick && onClick(effectiveRecipe)}
-        className={`group cursor-pointer rounded-3xl overflow-hidden shadow-soft hover:shadow-soft-lg transition-all duration-300 transform hover:-translate-y-1 relative ${
-          isBookmarked
-            ? "bg-yellow-50 ring-2 ring-yellow-300" // ← yellow highlight when bookmarked
-            : "bg-white"
-        }`}
+        className="group cursor-pointer rounded-3xl overflow-hidden shadow-soft hover:shadow-soft-lg transition-all duration-300 transform hover:-translate-y-1 relative bg-white"
       >
         {/* Bookmark / edit buttons */}
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
