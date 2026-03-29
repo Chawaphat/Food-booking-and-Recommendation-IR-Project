@@ -300,7 +300,7 @@ export default function BookmarksPage() {
               </button>
             )}
             <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-              {folderId ? currentFolderName || "Folder" : "My Bookmark"}
+              {folderId ? currentFolderName || "Folder" : "MEALIO"}
             </h1>
           </div>
 

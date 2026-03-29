@@ -18,8 +18,7 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already taken."}), 400
 
-    # In a production app you would hash the password with bcrypt/argon2.
-    # For this prototype we store it as-is.
+    
     new_user = User(username=username, password_hash=password)
     db.session.add(new_user)
     db.session.commit()
@@ -44,7 +43,6 @@ def login():
     if not user:
         return jsonify({"error": "Invalid username or password."}), 401
 
-    # Plain-text comparison (prototype only — use password hashing in production)
     if user.password_hash != password:
         return jsonify({"error": "Invalid username or password."}), 401
 

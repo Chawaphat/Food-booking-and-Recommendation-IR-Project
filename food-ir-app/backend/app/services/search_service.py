@@ -88,21 +88,7 @@ class SearchService:
 
     # ── Search with spell suggestions ─────────────────────────────────────────
     def search_with_suggestions(self, query, top_k=20):
-        """
-        Run search + ES term-suggester in one request.
-
-        Returns:
-            {
-              "results":         [...recipe dicts],
-              "suggestions":     ["corrected word1", ...],
-              "corrected_query": "full corrected query string" or None,
-            }
-
-        Logic:
-          - Each token is checked against 'name' and 'ingredients.name' fields.
-          - If a word has no options in 'name', we fall back to 'ingredients'.
-          - corrected_query is None when no words needed correction (no banner).
-        """
+        
         self._ensure_connected()
 
         suggest_body = {
@@ -222,11 +208,7 @@ class SearchService:
 
     # ── Personalised recommendations with reviewCount boost ───────────────────
     def recommend(self, signals, exclude_ids=None, top_k=10):
-        """
-        signals: {"keywords": [...str], "ingredients": [...str]}
-        Searches using those signals and boosts results by log(1 + reviewCount).
-        Returns up to top_k results that are NOT in exclude_ids.
-        """
+        
         self._ensure_connected()
         exclude_ids = set(str(i) for i in (exclude_ids or []))
 
@@ -237,7 +219,6 @@ class SearchService:
         if not query_text:
             return []
 
-        # Over-fetch so we can filter out bookmarked IDs
         fetch_size = max(top_k * 4, 40)
         try:
             response = self.es.search(
@@ -282,11 +263,7 @@ class SearchService:
 
     # ── Popularity-biased random (for "Discover") ─────────────────────────────
     def popular_random(self, exclude_ids=None, top_k=10):
-        """
-        Fetches the top 500 recipes by reviewCount DESC, then randomly samples
-        top_k from them. This gives "discover" results that skew popular but
-        are still unpredictable on each page load.
-        """
+        
         self._ensure_connected()
         exclude_ids = set(str(i) for i in (exclude_ids or []))
         candidate_pool = 500

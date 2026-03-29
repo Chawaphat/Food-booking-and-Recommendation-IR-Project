@@ -36,23 +36,18 @@ def _extract_signals(recipes, max_keywords=10, max_ingredients=10):
             if name:
                 ingredients.append(name)
 
-    seen = set()
-    unique_keywords = []
-    for k in keywords:
-        if k and k not in seen:
-            seen.add(k)
-            unique_keywords.append(k)
+    from collections import Counter
+    kw_counter = Counter(k for k in keywords if k)
+    ing_counter = Counter(i for i in ingredients if i)
 
-    seen = set()
-    unique_ingredients = []
-    for i in ingredients:
-        if i and i not in seen:
-            seen.add(i)
-            unique_ingredients.append(i)
+    unique_keywords = [k for k, c in kw_counter.most_common(max_keywords)]
+    unique_ingredients = [i for i, c in ing_counter.most_common(max_ingredients)]
 
     return {
-        "keywords": unique_keywords[:max_keywords],
-        "ingredients": unique_ingredients[:max_ingredients],
+        "keywords": unique_keywords,
+        "ingredients": unique_ingredients,
+        "keyword_counts": dict(kw_counter.most_common(max_keywords)),
+        "ingredient_counts": dict(ing_counter.most_common(max_ingredients)),
     }
 
 
